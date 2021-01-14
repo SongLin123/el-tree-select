@@ -1,17 +1,14 @@
 {
-  "name": "el-tree-select",
+  "name": "my-tree-select",
   "version": "3.1.13",
   "description": "基于element-ui2.x扩展下拉带树的组件,目前已剥离组件可作为独立插件使用",
   "author": "dawdler",
   "private": false,
   "repository": {
     "type": "git",
-    "url": "https://github.com/ayiaq1/el-tree-select"
+    "url": "https://github.com/SongLin123/el-tree-select.git"
   },
-  "bugs": {
-    "url": "https://github.com/ayiaq1/el-tree-select/issues",
-    "email": "250751717@qq.com"
-  },
+
   "keywords": [
     "vue",
     "vue-cli3",
