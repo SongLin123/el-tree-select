@@ -3,26 +3,26 @@
  * @Author: dawdler
  * @Date: 2018-12-19 14:03:03
  * @LastModifiedBy: dawdler
- * @LastEditTime : 2021-01-14 12:06:18
+ * @LastEditTime : 2021-01-14 16:51:52
  -->
 <template>
     <div class="el-tree-select" :class="selectClass">
         <!-- 下拉文本 -->
         <el-select :id="'el-tree-select-' + guid" :style="styles" class="el-tree-select-input" v-model="labels" :disabled="disabled" popper-class="select-option" ref="select" v-bind="selectParams" :popper-append-to-body="false" :filterable="false" :multiple="selectParams.multiple" v-popover:popover @remove-tag="_selectRemoveTag" :title="labels" @clear="_selectClearFun" @focus="_popoverShowFun"> </el-select>
         <!-- 弹出框 -->
-        <el-popover ref="popover" :placement="placement" :popper-class="popperClass" :width="width"
-         :popper-options="popOptions"
-         v-model="visible" trigger="click">
+        <el-popover ref="popover" :placement="placement" :popper-class="popperClass" :width="width" v-model="visible" trigger="click">
+            <!-- <div :style="{ visibility: visible ? 'visible' : 'hidden' }"> -->
             <!-- 是否显示搜索框 -->
             <el-input v-if="treeParams.filterable" v-model="keywords" size="mini" class="input-with-select mb10" @change="_searchFun">
                 <el-button slot="append" icon="el-icon-search"></el-button>
             </el-input>
-            <el-scrollbar tag="div" wrap-class="el-select-dropdown__wrap" view-class="el-select-dropdown__list" class="is-empty">
+            <el-scrollbar ref="scrollbar" tag="div" wrap-class="el-select-dropdown__wrap" view-class="el-select-dropdown__list" class="is-empty">
                 <!-- 树列表 -->
                 <el-tree ref="tree" v-show="data.length > 0" v-bind="treeParams" :data="data" :node-key="propsValue" :draggable="false" :current-node-key="ids.length > 0 ? ids[0] : ''" :show-checkbox="selectParams.multiple" :filter-node-method="filterNodeMethod ? filterNodeMethod : _filterFun" :render-content="treeRenderFun" @node-click="_treeNodeClickFun" @check="_treeCheckFun"></el-tree>
                 <!-- 暂无数据 -->
                 <div v-if="data.length === 0" class="no-data">暂无数据</div>
             </el-scrollbar>
+            <!-- </div> -->
         </el-popover>
     </div>
 </template>
@@ -30,6 +30,7 @@
 <script>
 import { on, off } from '../../utils/dom';
 import { each, guid } from '../../utils/utils';
+
 // @group api
 export default {
     name: 'el-tree-select',
@@ -39,7 +40,7 @@ export default {
             // `String` / `Array` / `Number`
             type: [String, Array, Number],
             // `''`
-            default() {
+            default () {
                 return '';
             }
         },
@@ -47,21 +48,21 @@ export default {
         styles: {
             type: Object,
             // {}
-            default() {
+            default () {
                 return {};
             }
         },
         // 下拉框 挂类
         selectClass: {
             type: String,
-            default() {
+            default () {
                 return '';
             }
         },
         // popover 挂类
         popoverClass: {
             type: String,
-            default() {
+            default () {
                 return '';
             }
         },
@@ -69,7 +70,7 @@ export default {
         disabled: {
             type: Boolean,
             // false
-            default() {
+            default () {
                 return false;
             }
         },
@@ -77,7 +78,7 @@ export default {
         placement: {
             type: String,
             //  bottom
-            default() {
+            default () {
                 return 'bottom';
             }
         },
@@ -104,7 +105,7 @@ export default {
             搜索框placeholder文字：<br>
             `placeholder: '请选择',`<br><br>
             */
-            default() {
+            default () {
                 return {
                     clearable: true,
                     disabled: false,
@@ -143,7 +144,7 @@ export default {
                 `disabled: 'disabled'`<br>
             `}`
             */
-            default() {
+            default () {
                 return {
                     clickParent: false,
                     filterable: false,
@@ -161,7 +162,7 @@ export default {
             }
         }
     },
-    data() {
+    data () {
         return {
             guid: guid(),
             propsValue: 'flowId',
@@ -177,18 +178,18 @@ export default {
             ids: [], // 存储id
             visible: false, // popover v-model
             width: 150,
-            popOptions:{ boundariesElement: 'scrollParent', gpuAcceleration: true }
+            parentNode: null
         };
     },
     watch: {
-        ids: function(val) {
+        ids: function (val) {
             if (val !== undefined) {
                 this.$nextTick(() => {
                     this._setSelectNodeFun(val);
                 });
             }
         },
-        value: function(val) {
+        value: function (val) {
             if (this.ids !== val) {
                 this._setMultipleFun();
                 if (this.selectParams.multiple) {
@@ -197,15 +198,42 @@ export default {
                     this.ids = val === '' ? [] : [val];
                 }
             }
+        },
+        visible: function (val, old) {
+            if (val !== old) {
+                let style = this.parentNode.style;
+                let orgDisplay = style.getPropertyValue('display');
+                let oldDisplay = orgDisplay;
+                let last = {};
+                let now = {};
+
+                let interval = setInterval(() => {
+                    let newDisplay = style.getPropertyValue('display');
+                    now = { org: orgDisplay, new: newDisplay, old: oldDisplay };
+
+                    if (((last.oldDisplay === now.oldDisplay && !now.oldDisplay) || (last.newDisplay === now.newDisplay && !now.newDisplay)) && oldDisplay === newDisplay) {
+                        if (newDisplay === 'none') {
+                            style.setProperty('visibility', 'hidden');
+                            style.setProperty('display', '');
+                        } else {
+                            style.removeProperty('visibility');
+                        }
+                        clearInterval(interval);
+                    }
+
+                    oldDisplay = newDisplay;
+                    last = now;
+                }, 200);
+            }
         }
     },
     computed: {
-        popperClass() {
+        popperClass () {
             let _c = 'el-tree-select-popper ' + this.popoverClass;
             return this.disabled ? _c + ' disabled ' : _c;
         }
     },
-    created() {
+    created () {
         const { props, data, leafOnly, includeHalfChecked } = this.treeParams;
         this._setMultipleFun();
         this.propsValue = props.value;
@@ -224,15 +252,19 @@ export default {
             this.ids = this.value instanceof Array ? this.value : [this.value];
         }
     },
-    mounted() {
+    mounted () {
         this._updateH();
         this.$nextTick(() => {
             on(document, 'mouseup', this._popoverHideFun);
+            this.parentNode = this.$refs.scrollbar.$el.parentNode;
+            // let style = this.parentNode.style;
+            // style.setProperty('visibility', 'hidden');
+            // style.setProperty('display', '');
         });
     },
     methods: {
         // 根据类型判断单选，多选
-        _setMultipleFun() {
+        _setMultipleFun () {
             let multiple = false;
             if (this.value instanceof Array) {
                 multiple = true;
@@ -240,7 +272,7 @@ export default {
             this.$set(this.selectParams, 'multiple', multiple);
         },
         // 输入文本框输入内容抛出
-        _searchFun() {
+        _searchFun () {
             /*
             对外抛出搜索方法，自行判断是走后台查询，还是前端过滤<br>
             前端过滤：this.$refs.treeSelect.$refs.tree.filter(value);<br>
@@ -249,7 +281,7 @@ export default {
             this.$emit('searchFun', this.keywords);
         },
         //  根据id筛选当前树名称，以及选中树列表
-        _setSelectNodeFun(ids) {
+        _setSelectNodeFun (ids) {
             const el = this.$refs.tree;
             if (!el) {
                 throw new Error('找不到tree dom');
@@ -297,14 +329,14 @@ export default {
             this._updatePopoverLocationFun();
         },
         // 更新popover位置
-        _updatePopoverLocationFun() {
+        _updatePopoverLocationFun () {
             // dom高度还没有更新，做一个延迟
             setTimeout(() => {
                 this.$refs.popover.updatePopper();
             }, 50);
         },
         // 获取MouseEvent.path 针对浏览器兼容性兼容ie11,edge,chrome,firefox,safari
-        _getEventPath(evt) {
+        _getEventPath (evt) {
             const path = (evt.composedPath && evt.composedPath()) || evt.path;
             const target = evt.target;
             if (path != null) {
@@ -313,7 +345,7 @@ export default {
             if (target === window) {
                 return [window];
             }
-            function getParents(node, memo) {
+            function getParents (node, memo) {
                 memo = memo || [];
                 const parentNode = node.parentNode;
                 if (!parentNode) {
@@ -325,12 +357,12 @@ export default {
             return [target].concat(getParents(target), window);
         },
         // 树过滤
-        _filterFun(value, data, node) {
+        _filterFun (value, data, node) {
             if (!value) return true;
             return data[this.propsLabel].indexOf(value) !== -1;
         },
         // 树点击
-        _treeNodeClickFun(data, node, vm) {
+        _treeNodeClickFun (data, node, vm) {
             const { multiple } = this.selectParams;
             const { clickParent } = this.treeParams;
             const checkStrictly = this.treeParams['check-strictly'];
@@ -390,7 +422,7 @@ export default {
             this.$emit('node-click', data, node, vm);
         },
         // 树勾选
-        _treeCheckFun(data, node, vm) {
+        _treeCheckFun (data, node, vm) {
             this.ids = [];
             const { propsValue } = this;
             node.checkedNodes.forEach(item => {
@@ -406,7 +438,7 @@ export default {
             this._emitFun();
         },
         // 下拉框移除tag时触发
-        _selectRemoveTag(tag) {
+        _selectRemoveTag (tag) {
             const { data, propsValue, propsLabel, propsChildren } = this;
             each(
                 data,
@@ -423,7 +455,7 @@ export default {
             this._emitFun();
         },
         // 下拉框清空数据
-        _selectClearFun() {
+        _selectClearFun () {
             this.ids = [];
             const { multiple } = this.selectParams;
             // 下拉框清空，对外抛出``this.$emit('input', multiple ? [] : '');`
@@ -433,23 +465,23 @@ export default {
             this._updatePopoverLocationFun();
         },
         // 判断类型，抛出当前选中id
-        _emitFun() {
+        _emitFun () {
             const { multiple } = this.selectParams;
             this.$emit('input', multiple ? this.ids : this.ids.length > 0 ? this.ids[0] : '');
             this._updatePopoverLocationFun();
         },
         // 更新宽度
-        _updateH() {
+        _updateH () {
             this.$nextTick(() => {
                 this.width = this.$refs.select.$el.getBoundingClientRect().width;
             });
         },
         // 显示弹出框的时候容错，查看是否和el宽度一致
-        _popoverShowFun(val) {
+        _popoverShowFun (val) {
             this._updateH();
         },
         // 判断是否隐藏弹出框
-        _popoverHideFun(e) {
+        _popoverHideFun (e) {
             const path = this._getEventPath(e);
             let isInside = path.some(list => {
                 // 鼠标在弹出框内部，阻止隐藏弹出框
@@ -464,7 +496,7 @@ export default {
          * 树列表更新数据
          * @arg Array
          */
-        treeDataUpdateFun(data) {
+        treeDataUpdateFun (data) {
             this.data = data;
             // 数据更新完成之后，判断是否回显内容
             if (data.length > 0) {
@@ -479,12 +511,12 @@ export default {
          * 本地过滤方法
          * @arg String
          */
-        filterFun(val) {
+        filterFun (val) {
             this.$refs.tree.filter(val);
         }
     },
     components: {},
-    beforeDestroy() {
+    beforeDestroy () {
         off(document, 'mouseup', this._popoverHideFun);
     }
 };
