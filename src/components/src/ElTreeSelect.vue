@@ -3,14 +3,16 @@
  * @Author: dawdler
  * @Date: 2018-12-19 14:03:03
  * @LastModifiedBy: dawdler
- * @LastEditTime: 2020-12-26 14:51:20
+ * @LastEditTime : 2021-01-14 12:06:18
  -->
 <template>
     <div class="el-tree-select" :class="selectClass">
         <!-- 下拉文本 -->
         <el-select :id="'el-tree-select-' + guid" :style="styles" class="el-tree-select-input" v-model="labels" :disabled="disabled" popper-class="select-option" ref="select" v-bind="selectParams" :popper-append-to-body="false" :filterable="false" :multiple="selectParams.multiple" v-popover:popover @remove-tag="_selectRemoveTag" :title="labels" @clear="_selectClearFun" @focus="_popoverShowFun"> </el-select>
         <!-- 弹出框 -->
-        <el-popover ref="popover" :placement="placement" :popper-class="popperClass" :width="width" v-model="visible" trigger="click">
+        <el-popover ref="popover" :placement="placement" :popper-class="popperClass" :width="width"
+         :popper-options="popOptions"
+         v-model="visible" trigger="click">
             <!-- 是否显示搜索框 -->
             <el-input v-if="treeParams.filterable" v-model="keywords" size="mini" class="input-with-select mb10" @change="_searchFun">
                 <el-button slot="append" icon="el-icon-search"></el-button>
@@ -174,7 +176,8 @@ export default {
             labels: '', // 存储名称，用于下拉框显示内容
             ids: [], // 存储id
             visible: false, // popover v-model
-            width: 150
+            width: 150,
+            popOptions:{ boundariesElement: 'scrollParent', gpuAcceleration: true }
         };
     },
     watch: {
